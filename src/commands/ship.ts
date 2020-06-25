@@ -50,7 +50,7 @@ const command: GluegunCommand = {
       }
     ])
 
-    if ((await existsAsync(parameters.first)) != 'file') {
+    if ((await existsAsync(parameters.first)) !== 'file') {
       print.error("I couldn't find that file :(")
       return
     }
@@ -59,7 +59,6 @@ const command: GluegunCommand = {
 
     let uploadSpinner = print.spin('Uploading file to Slack...')
 
-    //let uploadResp
     try {
       await slack.files.upload({
         file: stream,
@@ -67,7 +66,7 @@ const command: GluegunCommand = {
         initial_comment: text
       })
     } catch (e) {
-      if (e.code == ErrorCode.PlatformError) {
+      if (e.code === ErrorCode.PlatformError) {
         uploadSpinner.fail(
           `Uploading to Slack failed with error \`${e.data.error}\``
         )
