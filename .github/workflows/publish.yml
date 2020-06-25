@@ -14,9 +14,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - run: yarn install
       - run: 'echo "${{ secrets.CLI_CONFIG }}" > src/config.ts'
-      - run: |
-          yarn build
-          rm -rf src/
+      - run: yarn build
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
