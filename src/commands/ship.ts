@@ -1,22 +1,24 @@
 import { GluegunCommand } from 'gluegun'
 import { createReadStream } from 'fs'
-import { WebClient } from '@slack/web-api'
+import { WebClient, ErrorCode } from '@slack/web-api'
 
 import { Readable } from 'stream'
 
 const command: GluegunCommand = {
   name: 'ship',
-  description: 'Post your project to #ship, #scrapbook, or both!',
+  description: 'Post your project to various Slack channels!',
   run: async toolbox => {
     const {
       print,
       parameters,
-      prompt: { ask }
+      prompt: { ask },
+      filesystem: { existsAsync }
     } = toolbox
 
     const channels = {
       '#ship': 'C0M8PUPU6',
-      '#scrapbook': 'C01504DCLVD'
+      '#scrapbook': 'C01504DCLVD',
+      '#wip': 'CCU43K0PK'
     }
 
     const token = await toolbox.store.get('token')
@@ -48,21 +50,33 @@ const command: GluegunCommand = {
       }
     ])
 
-    let stream: Readable
-    try {
-      stream = createReadStream(parameters.first)
-    } catch (e) {
-      print.error("I couldn't access that file. :(")
+    if ((await existsAsync(parameters.first)) != 'file') {
+      print.error("I couldn't find that file :(")
+      return
     }
 
-    let uploadSpinner = print.spin()
+    let stream: Readable = createReadStream(parameters.first)
 
-    let uploadResp = await slack.files.upload({
-      file: stream,
-      channels: selectedChannels,
-      initial_comment: text
-    })
+    let uploadSpinner = print.spin('Uploading file to Slack...')
 
+    //let uploadResp
+    try {
+      await slack.files.upload({
+        file: stream,
+        channels: selectedChannels.map(i => channels[i]).join(','),
+        initial_comment: text
+      })
+    } catch (e) {
+      if (e.code == ErrorCode.PlatformError) {
+        uploadSpinner.fail(
+          `Uploading to Slack failed with error \`${e.data.error}\``
+        )
+        print.debug(e.data)
+      }
+      return
+    }
+
+    uploadSpinner.succeed('Yay!')
   }
 }
 
