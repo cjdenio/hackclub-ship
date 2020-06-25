@@ -71,7 +71,6 @@ const command: GluegunCommand = {
         uploadSpinner.fail(
           `Uploading to Slack failed with error \`${e.data.error}\``
         )
-        print.debug(e.data)
       }
       return
     }
