@@ -33,7 +33,7 @@ const command: GluegunCommand = {
 
     const file = parameters.first
     if (!file) {
-      print.info('Please provide an image file, like `ship image.png`')
+      print.info('Please provide a file, like `ship image.png`')
       return
     }
 
