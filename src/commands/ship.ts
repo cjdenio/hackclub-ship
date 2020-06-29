@@ -37,19 +37,26 @@ const command: GluegunCommand = {
       return
     }
 
-    let { text, channels: selectedChannels } = await ask([
+    let questions: any = [
       {
         type: 'input',
         name: 'text',
         message: 'Message Text'
-      },
-      {
+      }
+    ]
+
+    let channelParam = parameters.options.channel || parameters.options.channels
+
+    if (!channelParam) {
+      questions.push({
         type: 'multiselect',
         name: 'channels',
         message: 'What channels do you want to post to? (<space> to select)',
         choices: Object.keys(channels)
-      }
-    ])
+      })
+    }
+
+    let { text, channels: selectedChannels } = await ask(questions)
 
     if (!(await confirm('Are you ready to ship?'))) {
       print.error('Aborting. :(')
@@ -85,7 +92,9 @@ const command: GluegunCommand = {
     try {
       await slack.files.upload({
         file: stream,
-        channels: selectedChannels.map((i: string) => channels[i]).join(','),
+        channels:
+          channelParam ||
+          selectedChannels.map((i: string) => channels[i]).join(','),
         initial_comment: text
       })
     } catch (e) {
