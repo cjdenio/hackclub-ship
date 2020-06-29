@@ -1,6 +1,6 @@
 {
   "name": "hackclub-ship",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "The best way for Hack Club members to ship their projects to Slack!",
   "private": false,
   "types": "build/types/types.d.ts",
@@ -41,6 +41,7 @@
   "license": "MIT",
   "dependencies": {
     "@slack/web-api": "^5.10.0",
+    "axios": "^0.19.2",
     "express": "^4.17.1",
     "gluegun": "latest",
     "open": "^7.0.4"

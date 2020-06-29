@@ -1,6 +1,7 @@
 import { GluegunCommand } from 'gluegun'
 import { createReadStream } from 'fs'
 import { WebClient, ErrorCode } from '@slack/web-api'
+import axios from 'axios'
 
 import { Readable } from 'stream'
 
@@ -11,7 +12,7 @@ const command: GluegunCommand = {
     const {
       print,
       parameters,
-      prompt: { ask },
+      prompt: { ask, confirm },
       filesystem: { existsAsync }
     } = toolbox
 
@@ -32,37 +33,68 @@ const command: GluegunCommand = {
 
     const file = parameters.first
     if (!file) {
-      print.info('Please provide an image file, like `ship image.png`')
+      print.info('Please provide a file, like `ship image.png`')
       return
     }
 
-    let { text, channels: selectedChannels } = await ask([
+    let questions: any = [
       {
         type: 'input',
         name: 'text',
         message: 'Message Text'
-      },
-      {
+      }
+    ]
+
+    let channelParam = parameters.options.channel || parameters.options.channels
+
+    if (!channelParam) {
+      questions.push({
         type: 'multiselect',
         name: 'channels',
         message: 'What channels do you want to post to? (<space> to select)',
         choices: Object.keys(channels)
-      }
-    ])
+      })
+    }
 
-    if ((await existsAsync(parameters.first)) !== 'file') {
-      print.error("I couldn't find that file :(")
+    let { text, channels: selectedChannels } = await ask(questions)
+
+    if (!(await confirm('Are you ready to ship?'))) {
+      print.error('Aborting. :(')
       return
     }
 
-    let stream: Readable = createReadStream(parameters.first)
+    let stream: Readable
+
+    if (
+      parameters.first.startsWith('http://') ||
+      parameters.first.startsWith('https://')
+    ) {
+      // It be a URL
+      try {
+        stream = (await axios.get(parameters.first, { responseType: 'stream' }))
+          .data
+      } catch (e) {
+        print.error("I couldn't access that file :(")
+        return
+      }
+    } else {
+      // It be a file
+      if ((await existsAsync(parameters.first)) !== 'file') {
+        print.error("I couldn't access that file :(")
+        return
+      }
+
+      stream = createReadStream(parameters.first)
+    }
 
     let uploadSpinner = print.spin('Uploading file to Slack...')
 
     try {
       await slack.files.upload({
         file: stream,
-        channels: selectedChannels.map(i => channels[i]).join(','),
+        channels:
+          channelParam ||
+          selectedChannels.map((i: string) => channels[i]).join(','),
         initial_comment: text
       })
     } catch (e) {
@@ -74,7 +106,7 @@ const command: GluegunCommand = {
       return
     }
 
-    uploadSpinner.succeed('Yay!')
+    uploadSpinner.succeed('Your project has been successfully shipped!')
   }
 }
 
