@@ -1,0 +1,12 @@
+name: Check Formatting
+on:
+  - push
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v2-beta
+      - run: yarn install
+      - run: yarn checkformat
