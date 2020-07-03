@@ -1,6 +1,6 @@
 {
   "name": "hackclub-ship",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "The best way for Hack Club members to ship their projects to Slack!",
   "private": false,
   "types": "build/types/types.d.ts",

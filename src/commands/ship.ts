@@ -58,6 +58,8 @@ const command: GluegunCommand = {
 
     let { text, channels: selectedChannels } = await ask(questions)
 
+    text = text.replace(/\\n/g, '\n')
+
     if (!(await confirm('Are you ready to ship?'))) {
       print.error('Aborting. :(')
       return
